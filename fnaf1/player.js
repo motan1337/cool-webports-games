@@ -134,7 +134,7 @@ function drawCounter(obj, x, y) {
   const def = obj.def;
   if (!def.counter_frames || !def.display) return;
   if (def.display === 4) {
-    const handle = def.counter_frames[Math.max(0, Math.min(def.counter_frames.length - 1, Math.trunc(obj.value)))];
+    const handle = game.counterImageHandle(obj);
     const img = game.images.get(handle);
     imageDraw(handle, x - (img?.hotspot[0] || 0), y - (img?.hotspot[1] || 0), obj.opacity);
     return;
@@ -165,6 +165,8 @@ function render() {
   canvas.dataset.frame = String(game.frame.index);
   canvas.dataset.tick = String(game.tickCount);
   canvas.dataset.power = String(game.value(104));
+  canvas.dataset.usage = String(game.value(108));
+  canvas.dataset.usageImage = String(game.object(108) ? game.counterImageHandle(game.object(108)) : '');
   canvas.dataset.viewing = String(game.value(49));
   canvas.dataset.scroll = String(game.scrollX);
   canvas.dataset.overlayOffset = String(game.object(75) ? game.scrollOffset(game.object(75)) : 0);
