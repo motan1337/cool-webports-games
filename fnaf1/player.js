@@ -22,7 +22,7 @@ const audioPending = new Map();
 const channels = new Map();
 const volumes = new Map();
 let audioGeneration = 0;
-const storageKey = 'fnaf1-archive-save-v1';
+const storageKey = 'fnaf1-save-v1';
 let saveData = {};
 try { saveData = JSON.parse(localStorage.getItem(storageKey) || '{}'); } catch (_) {}
 
