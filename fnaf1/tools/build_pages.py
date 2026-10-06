@@ -5,6 +5,7 @@ import re
 import shutil
 import zipfile
 from pathlib import Path
+from verify_pages_csp import validate_csp
 
 root = Path(__file__).resolve().parents[1]
 output = root / 'pages'
@@ -27,10 +28,13 @@ csp = ("default-src 'none'; script-src " + ' '.join(script_hashes)
        + " media-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'")
 meta_csp = csp.replace(" frame-ancestors 'none';", '')
 html = html.replace('  <title>', '  <meta http-equiv="Content-Security-Policy" content="' + meta_csp + '">\n  <title>', 1)
-(output / 'index.html').write_text(html, encoding='utf-8')
+(output / 'index.html').write_text(html, encoding='utf-8', newline='\n')
 (output / '_headers').write_text(
     '/*\n  Content-Security-Policy: ' + csp
     + '\n  X-Content-Type-Options: nosniff\n  Referrer-Policy: no-referrer\n', encoding='utf-8')
+
+csp_validation = validate_csp((output / 'index.html').read_text(encoding='utf-8'),
+                              (output / '_headers').read_text(encoding='utf-8'))
 
 files = [output / 'index.html', output / '_headers']
 for folder in ('extracted/images', 'extracted/audio'):
@@ -53,7 +57,8 @@ assert set(p.relative_to(output).as_posix() for p in output.rglob('*') if p.is_f
 report = dict(file_count=len(files), html_bytes=(output / 'index.html').stat().st_size,
               largest_file_bytes=max(p.stat().st_size for p in files),
               total_bytes=sum(p.stat().st_size for p in files),
-              scripts_inlined=len(script_hashes), images=len(data['images']), sounds=len(data['sounds']))
+              scripts_inlined=len(script_hashes), images=len(data['images']), sounds=len(data['sounds']),
+              csp_validation=csp_validation)
 (root / 'analysis/pages-build.json').write_text(json.dumps(report, indent=2), encoding='utf-8')
 archive_path = root / 'dist/fnaf1-pages.zip'
 archive_path.parent.mkdir(exist_ok=True)
@@ -62,6 +67,7 @@ with zipfile.ZipFile(archive_path, 'w', zipfile.ZIP_DEFLATED, compresslevel=6) a
         archive.write(file, file.relative_to(output).as_posix())
 with zipfile.ZipFile(archive_path) as archive:
     assert archive.testzip() is None
+    validate_csp(archive.read('index.html').decode('utf-8'), archive.read('_headers').decode('utf-8'))
 print(json.dumps(report, indent=2))
 print('Pages folder:', output)
 print('Upload ZIP:', archive_path)
