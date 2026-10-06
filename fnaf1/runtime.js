@@ -27,6 +27,8 @@
         value: def.initial || 0, alt: [...(def.alterable_values || [])], flags: def.alterable_flags || 0,
         animation: 0, direction: 0, animationFrame: 0, animationProgress: 0,
         animationDone: false, cycles: 0, destroyed: false,
+        pathProgress: 0, pathOriginX: instance.x || 0, pathOriginY: instance.y || 0,
+        movementStopped: !def.movements?.[0]?.enabled || !def.movements[0].nodes?.length,
         opacity: def.ink === 1 ? Math.max(0, 1 - def.coefficient / 128) : 1,
         iniFile: 'freddy', iniGroup: 'freddy' };
     }
@@ -65,6 +67,14 @@
     }
     object(id) { return this.list(id)[0]; }
     value(id) { return this.object(id)?.value || 0; }
+    counterImageHandle(obj) {
+      const frames = obj.def.counter_frames || [];
+      if (!frames.length) return undefined;
+      const minimum = obj.def.minimum ?? 0, maximum = obj.def.maximum ?? minimum;
+      const fraction = maximum > minimum ? (obj.value - minimum) / (maximum - minimum) : 0;
+      const index = Math.floor(Math.max(0, Math.min(1, fraction)) * (frames.length - 1));
+      return frames[index];
+    }
     direction(obj) {
       const animations = obj.def.animations;
       if (!animations) return null;
@@ -190,7 +200,7 @@
           if (number === -3) return obj.animation === exp(0) && !obj.animationDone;
           if (number === -2) return obj.animation === exp(0) && obj.animationDone;
           if (number === -1) return cmp(obj.animationFrame, 0);
-          if (number === -7) return true;
+          if (number === -7) return obj.movementStopped;
           throw new Error(`Unknown object condition ${type}:${number}`);
         });
         result = matches.length > 0;
@@ -270,6 +280,30 @@
         else throw new Error(`Unknown object action ${type}:${number}`);
       }
     }
+    movePaths() {
+      for (const obj of this.instances) {
+        const path = obj.def.movements?.[0];
+        if (obj.destroyed || obj.movementStopped || path?.type !== 5) continue;
+        const node = path.nodes[0];
+        // Clickteam advances 256 * speed << 5 in a 16-bit distance accumulator.
+        const timer = this.frame.flags & 32768 ? this.frame.movement_timer_base / this.data.frame_rate : 1;
+        obj.pathProgress += Math.trunc(256 * timer) * node.speed * 32;
+        const distance = obj.pathProgress >>> 16;
+        if (distance < node.length) {
+          obj.x = obj.pathOriginX + Math.trunc(distance * node.cosine / 16384);
+          obj.y = obj.pathOriginY + Math.trunc(distance * node.sine / 16384);
+        } else {
+          obj.x = obj.pathOriginX + node.dx;
+          obj.y = obj.pathOriginY + node.dy;
+          obj.pathProgress = 0;
+          if (path.reposition) {
+            obj.x = obj.pathOriginX; obj.y = obj.pathOriginY;
+          }
+          if (!path.loop) obj.movementStopped = true;
+          else { obj.pathOriginX = obj.x; obj.pathOriginY = obj.y; }
+        }
+      }
+    }
     animate() {
       for (const obj of this.instances) {
         if (obj.destroyed || obj.animationDone) continue;
@@ -293,6 +327,7 @@
       if (this.stopped) return;
       this.stepMs = 1000 / this.data.frame_rate;
       if (this.tickCount > 0) this.time += this.stepMs;
+      this.movePaths();
       for (let i = 0; i < this.frame.events.length; i++) {
         const event = this.frame.events[i], state = this.eventState[i], selections = new Map();
         const conditions = event.conditions;
