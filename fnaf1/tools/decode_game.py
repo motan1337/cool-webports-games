@@ -47,6 +47,34 @@ def animations(data, base):
         result[index] = directions
     return result
 
+def movements(data, base):
+    result = []
+    count = unpack('I', data, base)[0]
+    for index in range(count):
+        name_offset, ident, offset, size = unpack('4I', data, base+4+16*index)
+        start = base+offset
+        assert start+size <= len(data)
+        player, kind, enabled, options, direction = unpack('hhBB2xI', data, start)
+        movement = dict(type=kind, enabled=bool(enabled), options=options, direction=direction)
+        if kind == 5:
+            count, minimum, maximum, loop, reposition, reverse = unpack('hhhBBB', data, start+12)
+            movement.update(minimum=minimum, maximum=maximum, loop=bool(loop),
+                            reposition=bool(reposition), reverse=bool(reverse), nodes=[])
+            pos = start+22
+            for _ in range(count):
+                node_size = data[pos+1]
+                assert node_size >= 16 and pos+node_size <= start+size
+                fields = unpack('BBhhhhhh', data, pos+2)
+                node = dict(zip(('speed','direction','dx','dy','cosine','sine','length','pause'), fields))
+                movement['nodes'].append(node)
+                pos += node_size
+            # This executable uses only unpaused, forward, single-segment paths.
+            assert count <= 1 and not reverse and all(n['pause'] == 0 for n in movement['nodes'])
+        else:
+            assert kind == 0, f'Unsupported movement type {kind}'
+        result.append(movement)
+    return result
+
 def properties(data, obj):
     kind = obj['type']
     if kind == 1:
@@ -65,6 +93,9 @@ def properties(data, obj):
     obj['identifier'] = data[46:50].decode('ascii', 'replace')
     animation_offset = offsets[5] if check else offsets[0]
     value_offset = offsets[0] if check else offsets[5]
+    movement_offset = offsets[3] if check else offsets[1]
+    if movement_offset:
+        obj['movements'] = movements(data, movement_offset)
     if animation_offset:
         obj['animations'] = animations(data, animation_offset)
     if values_offset:
@@ -190,6 +221,10 @@ event_histograms = dict(conditions=collections.Counter(), actions=collections.Co
 frames = []
 for original in archive['frames']:
     frame = {k: original[k] for k in ('index','name','width','height')}
+    frame_header = Path(next(c['file'] for c in original['chunks'] if c['id'] == '3334')).read_bytes()
+    frame['flags'] = unpack('I', frame_header, 12)[0]
+    timer_chunk = next((c for c in original['chunks'] if c['id'] == '3347'), None)
+    frame['movement_timer_base'] = unpack('I', Path(timer_chunk['file']).read_bytes())[0] if timer_chunk else 50
     frame['layers'] = []
     layer_chunk = next((c for c in original['chunks'] if c['id'] == '3341'), None)
     if layer_chunk:
@@ -286,4 +321,5 @@ stats['parameters'] = dict(parameter_histogram)
 print('Decoded', len(objects), 'objects and', sum(len(f['events']) for f in frames), 'event groups')
 print('Opcode counts:', {k:len(v) for k,v in stats.items()})
 print('Rate:',game['frame_rate'],'Frame handles:',frame_handles,'Fonts:',fonts)
+# Preserve the completed PNG inventory after the import's reproducible extraction pass.
 (root / 'analysis/extraction-inventory.json').write_text(json.dumps(archive, indent=2), encoding='utf-8')
