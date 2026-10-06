@@ -259,12 +259,23 @@ function point(event) {
   game.input.x = (event.clientX - rect.left) * 1280 / rect.width;
   game.input.y = (event.clientY - rect.top) * 720 / rect.height;
 }
-canvas.addEventListener('pointermove', point);
+function resetInput() {
+  game.input.click = false;
+  game.input.pressed.clear(); game.input.held.clear();
+  game.input.x = 640; game.input.y = 360;
+  neutralAfterStep = false;
+}
+canvas.addEventListener('pointermove', event => {
+  if (started && !paused && !document.hidden) point(event);
+});
 canvas.addEventListener('pointerdown', event => {
+  if (!started || paused || document.hidden) return;
   event.preventDefault(); point(event); game.input.click = true;
+  canvas.focus({ preventScroll: true });
   canvas.setPointerCapture(event.pointerId);
   soundContext?.resume();
 });
+canvas.addEventListener('pointercancel', resetInput);
 canvas.addEventListener('pointerup', event => {
   if (event.pointerType !== 'mouse') {
     const viewing = game.value(49);
@@ -274,29 +285,33 @@ canvas.addEventListener('pointerup', event => {
 const keyCode = event => ({ Escape: 27, Enter: 13, ArrowUp: 38, ArrowDown: 40, Delete: 46,
   '1': 49, '2': 50, c: 67, C: 67, d: 68, D: 68 }[event.key] || event.key.toUpperCase().charCodeAt(0));
 document.addEventListener('keydown', event => {
-  if (!started || event.target.closest('button,input,a')) return;
+  if (!started || paused || document.hidden || event.target.closest('button,input,a')) return;
   const key = keyCode(event);
   if (!game.input.held.has(key)) game.input.pressed.add(key);
   game.input.held.add(key); event.preventDefault();
 });
 document.addEventListener('keyup', event => game.input.held.delete(keyCode(event)));
 document.addEventListener('visibilitychange', () => {
-  accumulator = 0; game.input.held.clear();
+  accumulator = 0; resetInput();
   if (document.hidden) soundContext?.suspend();
   else if (!paused) soundContext?.resume();
 });
+window.addEventListener('blur', resetInput);
 document.querySelector('#start').onclick = async () => {
   soundContext = new (window.AudioContext || window.webkitAudioContext)();
   await soundContext.resume();
   document.querySelector('#gate').hidden = true; started = true; clock = 0;
+  canvas.focus({ preventScroll: true });
 };
 document.querySelector('#pause').onclick = event => {
-  paused = !paused; accumulator = 0; event.target.textContent = paused ? 'Resume' : 'Pause';
+  paused = !paused; accumulator = 0; resetInput(); event.target.textContent = paused ? 'Resume' : 'Pause';
   if (paused) soundContext?.suspend(); else soundContext?.resume();
+  if (!paused) canvas.focus({ preventScroll: true });
 };
 document.querySelector('#fullscreen').onclick = () => {
   const stage = document.querySelector('#stage');
   if (stage.requestFullscreen) stage.requestFullscreen().catch(() => {});
   else message.textContent = 'Rotate your device to landscape for the largest view.';
+  canvas.focus({ preventScroll: true });
 };
 requestAnimationFrame(loop);
