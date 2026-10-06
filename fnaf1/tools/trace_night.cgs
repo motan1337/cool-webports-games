@@ -1,0 +1,22 @@
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const data = require('../analysis/game-data.json');
+const { FusionGame } = require('../runtime.js');
+const results=[];
+for(const seed of [12345,54321,98765]) for(let night=1;night<=7;night++) {
+  let state=seed;
+  const random=()=>{state=(Math.imul(state,1664525)+1013904223)>>>0;return state/4294967296;};
+  const game=new FusionGame(data,{random});
+  game.object(11).value=night;
+  game.enter(3); game.input.x=640; game.input.y=360;
+  let ticks=0,lastOfficePower=game.value(104);
+  while(game.frame.index===3 && ticks<40000){lastOfficePower=game.value(104);game.step();ticks++;}
+  assert.notEqual(game.frame.index,3,`Night ${night}, seed ${seed} eventually leaves the office`);
+  assert.ok([4,5,6].includes(game.frame.index),'Office ends in death, outage death or 6 AM');
+  results.push({seed,night,ticks,seconds:ticks/data.frame_rate,destination:game.frame.index,
+    lastOfficePower,lastEvents:game.trace.slice(-20),storage:game.storage});
+}
+const output=path.resolve(__dirname,'../analysis/night-traces.json');
+fs.writeFileSync(output,JSON.stringify({scenario:'No controls, centered pointer; seeded RNG; bounding-box collisions',results},null,2));
+console.log(`Completed ${results.length} seeded night traces. Saved ${output}`);
