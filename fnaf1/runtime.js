@@ -174,9 +174,11 @@
         const delay = exp(0);
         if (number === -8) {
           const key = `${eventIndex}:${item.offset}`;
-          const last = this.timerState.get(key) ?? 0;
-          result = this.time + 0.001 >= last + delay;
-          if (result) this.timerState.set(key, this.time);
+          let remaining = this.timerState.get(key) ?? delay;
+          remaining -= this.tickCount > 0 ? this.stepMs : 0;
+          result = remaining <= 0.001;
+          if (result) remaining += delay;
+          this.timerState.set(key, remaining);
         } else if (number === -7) result = this.time + 0.001 >= delay && this.time - this.stepMs < delay;
         else if (number === -1) result = this.time > delay;
       } else if (type === -6) {
@@ -285,7 +287,6 @@
         const path = obj.def.movements?.[0];
         if (obj.destroyed || obj.movementStopped || path?.type !== 5) continue;
         const node = path.nodes[0];
-        // Clickteam advances 256 * speed << 5 in a 16-bit distance accumulator.
         const timer = this.frame.flags & 32768 ? this.frame.movement_timer_base / this.data.frame_rate : 1;
         obj.pathProgress += Math.trunc(256 * timer) * node.speed * 32;
         const distance = obj.pathProgress >>> 16;
@@ -308,10 +309,11 @@
       for (const obj of this.instances) {
         if (obj.destroyed || obj.animationDone) continue;
         const dir = this.direction(obj);
-        if (!dir || dir.frames.length <= 1) continue;
-        obj.animationProgress += dir.maximum / 100;
-        while (obj.animationProgress >= 1 && !obj.animationDone) {
-          obj.animationProgress--;
+        if (!dir || !dir.frames.length) continue;
+        const timer = this.frame.flags & 32768 ? this.frame.movement_timer_base / this.data.frame_rate : 1;
+        obj.animationProgress += Math.trunc(dir.maximum * timer);
+        while (obj.animationProgress > 100 && !obj.animationDone) {
+          obj.animationProgress -= 100;
           obj.animationFrame++;
           if (obj.animationFrame >= dir.frames.length) {
             obj.cycles++;
@@ -328,6 +330,7 @@
       this.stepMs = 1000 / this.data.frame_rate;
       if (this.tickCount > 0) this.time += this.stepMs;
       this.movePaths();
+      this.animate();
       for (let i = 0; i < this.frame.events.length; i++) {
         const event = this.frame.events[i], state = this.eventState[i], selections = new Map();
         const conditions = event.conditions;
@@ -349,7 +352,7 @@
       this.input.click = false;
       this.input.pressed.clear();
       if (this.pendingFrame !== null) this.enter(this.pendingFrame);
-      else { this.animate(); this.tickCount++; }
+      else this.tickCount++;
     }
   }
   if (typeof module !== 'undefined') module.exports = { FusionGame, compare };
