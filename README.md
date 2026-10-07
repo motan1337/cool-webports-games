@@ -11,3 +11,6 @@ const storageKey = 'fnaf1-save-v1';
 let saveData = {};
 try { saveData = JSON.parse(localStorage.getItem(storageKey) || '{}'); } catch (_) {}
 ``` 
+
+
+kingdom classic: https://kingdom.motan-femboy.cc/ --rough shape but playable, will update the repo as soon as i think it is not emberassing to post it as it is a mess.
