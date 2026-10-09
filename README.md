@@ -11,6 +11,8 @@ List of the games that i want to webport:
 - Cats are Liquid A Light in the Shadows
 - And more...
 
+When i will have multiple intresting webports i will make a seperated webpage to browse for easily the games im webporting... better said a wiki for my webports...
+
 fnaf1: https://fnaf1.motan-femboy.cc/
 
 kingdom classic: https://kingdom.motan-femboy.cc/ rough shape but playable; bugs: sound & music is fucked, and one user told me that the katapult has a funny bug but its only visual, after launching the rock and hits it starts to go to the moon ???
