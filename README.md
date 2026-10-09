@@ -13,4 +13,4 @@ try { saveData = JSON.parse(localStorage.getItem(storageKey) || '{}'); } catch (
 ``` 
 
 
-kingdom classic: https://kingdom.motan-femboy.cc/ --rough shape but playable, will update the repo as soon as i think it is not emberassing to post it as it is a mess.
+kingdom classic: https://kingdom.motan-femboy.cc/ --rough shape but playable; bugs: sound is fucked, music is fucked, and one user told me that the katapult has a funny bug but its only visual, after launching the rock and hits it starts to go to the moon ???
