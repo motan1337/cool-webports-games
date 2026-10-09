@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Kingdom Classic</title>
+  <style>
+    @font-face { font-family:Jacquard; src:url('../fonts/Jacquard12-Regular.ttf'); font-display:swap; }
+    html,body { margin:0; width:100%; height:100%; overflow:hidden; background:#000; }
+    #unity-canvas { display:block; position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); outline:none; }
+    #loading { position:fixed; inset:0; display:grid; place-content:center; color:#ff83b5; font:28px Jacquard,fantasy; pointer-events:none; }
+    #test-controls { position:fixed; top:4px; left:4px; z-index:5; }
+    #gameplay-check-results { position:fixed; top:40px; left:4px; z-index:6; background:#000; color:#ff83b5; font:14px monospace; }
+  </style>
+</head>
+<body>
+  <canvas id="unity-canvas" width="1280" height="720" tabindex="0"></canvas>
+  <div id="loading" role="status">Loading Kingdom...</div>
+#if DEVELOPMENT_PLAYER
+  <div id="test-controls">
+    <button data-test-key="ArrowLeft" data-key-code="37">Test ride left</button>
+    <button data-test-key="ArrowRight" data-key-code="39">Test ride right</button>
+    <button data-test-key="ArrowDown" data-key-code="40">Test pay</button>
+    <button data-test-key="ArrowRight" data-key-code="39" data-duration="20000">Test ride right 20s</button>
+    <button id="test-save">Test save</button>
+    <button id="test-gameplay">Test tower and hammer</button>
+  </div>
+#endif
+  <script src="Build/{{{ LOADER_FILENAME }}}"></script>
+  <script>
+    const canvas = document.getElementById('unity-canvas');
+    const loading = document.getElementById('loading');
+    let unityInstance;
+    function fitCanvas() {
+      const width = Math.min(innerWidth, innerHeight * 16 / 9);
+      canvas.style.width = Math.floor(width) + 'px';
+      canvas.style.height = Math.floor(width * 9 / 16) + 'px';
+    }
+    addEventListener('resize', fitCanvas);
+    fitCanvas();
+    createUnityInstance(canvas, {
+      dataUrl: 'Build/{{{ DATA_FILENAME }}}',
+      frameworkUrl: 'Build/{{{ FRAMEWORK_FILENAME }}}',
+      codeUrl: 'Build/{{{ CODE_FILENAME }}}',
+      streamingAssetsUrl: 'StreamingAssets',
+      companyName: {{{ JSON.stringify(COMPANY_NAME) }}},
+      productName: {{{ JSON.stringify(PRODUCT_NAME) }}},
+      productVersion: {{{ JSON.stringify(PRODUCT_VERSION) }}},
+      devicePixelRatio: 1
+    }, progress => { loading.textContent = 'Loading Kingdom... ' + Math.round(progress * 100) + '%'; })
+    .then(instance => { unityInstance = instance; loading.remove(); canvas.focus(); })
+    .catch(error => { loading.textContent = String(error); });
+#if DEVELOPMENT_PLAYER
+    document.querySelectorAll('[data-test-key]').forEach(button => {
+      button.addEventListener('click', () => {
+        canvas.focus();
+        const options = { key:button.dataset.testKey, code:button.dataset.testKey, keyCode:Number(button.dataset.keyCode), which:Number(button.dataset.keyCode), bubbles:true };
+        canvas.dispatchEvent(new KeyboardEvent('keydown', options));
+        setTimeout(() => canvas.dispatchEvent(new KeyboardEvent('keyup', options)), Number(button.dataset.duration || 2000));
+      });
+    });
+    document.getElementById('test-save').addEventListener('click', () => { globalThis.kingdomTestSaveRequested = true; canvas.focus(); });
+    document.getElementById('test-gameplay').addEventListener('click', () => { if (unityInstance) unityInstance.SendMessage('KingdomGameplayChecks', 'Run'); });
+#endif
+  </script>
+</body>
+</html>
