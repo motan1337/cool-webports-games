@@ -1,0 +1,92 @@
+{
+  "baseline": "Recovered browser project before the October audio, physics and tweaks fixes.",
+  "usage": "Apply to a matching private recovered project with git apply. These are changes, not complete game scripts.",
+  "authoredScripts": "Copy unity-web/Scripts, Editor, Plugins and Kingdom into the corresponding Assets folders in your own project.",
+  "audioPreparation": "Run tools/prepare_browser_audio.py in the private project after applying code changes.",
+  "patches": [
+    {
+      "file": "unity-web/Assets/Scripts/Assembly-CSharp/AudioEmitter.cs",
+      "patch": "patches/AudioEmitter.patch",
+      "baselineSha256Normalized": "3708d0c0ad4507a2aacb085adb7be2b94fe56d1263019244b8ec479468ac2288",
+      "updatedSha256Normalized": "daacee5aadf188403313ab563817f18c98b524f89bf9696a0b9ef46b3d32ad3c"
+    },
+    {
+      "file": "unity-web/Assets/Scripts/Assembly-CSharp/AudioManager.cs",
+      "patch": "patches/AudioManager.patch",
+      "baselineSha256Normalized": "f5d0a953ddb6328308996faf6bfa7ac14465d302e0f1059bb534bdab1558688e",
+      "updatedSha256Normalized": "6781c5c7c5dc750d43c9f79195361bfb0b53b8cbabee0b80e5c3c0c81877a38f"
+    },
+    {
+      "file": "unity-web/Assets/Scripts/Assembly-CSharp/Boulder.cs",
+      "patch": "patches/Boulder.patch",
+      "baselineSha256Normalized": "7a384a3c73c326b8ab9b9bc9cb2f97fa3c3073706a482bacf94ce67ecb788789",
+      "updatedSha256Normalized": "43148db859e1e9c6c5c9aaa3f3740fa177f91b04fb73d5783b5320742a520d3f"
+    },
+    {
+      "file": "unity-web/Assets/Scripts/Assembly-CSharp/Mover.cs",
+      "patch": "patches/Mover.patch",
+      "baselineSha256Normalized": "0d66c546e21df15706c55489bc9956e5121ea9c97378c0492e77bd8dd03f53b2",
+      "updatedSha256Normalized": "7258c7c5d65a483316407f52bb4393788935d76c0be426f7847ce480a4537569"
+    },
+    {
+      "file": "unity-web/Assets/Scripts/Assembly-CSharp/Scanner.cs",
+      "patch": "patches/Scanner.patch",
+      "baselineSha256Normalized": "b12e2d88a273c1f557de406316dbf362b78d5ba9c96293f39f27a06b84ef576c",
+      "updatedSha256Normalized": "23287048addef28fd3e327ab41fc6c8b86bfadd822565903641bdc3491ef0da2"
+    },
+    {
+      "file": "unity-web/Assets/Scripts/Assembly-CSharp/Troll.cs",
+      "patch": "patches/Troll.patch",
+      "baselineSha256Normalized": "cf297c1c916ed4a0fcea8d2ebefa826caef37f359215680c96a73355259a20ff",
+      "updatedSha256Normalized": "5e171bcb8d4dce106ebb5d7bc69e2f98f430879f0cf6b93f40d8533bec64f20c"
+    },
+    {
+      "file": "unity-web/Assets/Scripts/Assembly-CSharp/Steed.cs",
+      "patch": "patches/Steed.patch",
+      "baselineSha256Normalized": "c934c4ea7073cd7c45de87630a44c526f6b57e0078bec90f7f7e457efa1978d5",
+      "updatedSha256Normalized": "e43eda6b54d8c4740854bd14afef71dc9715292e4ff866f1282d1f32206fe4bd"
+    },
+    {
+      "file": "unity-web/Assets/Scripts/Assembly-CSharp/TimeBasedAudio.cs",
+      "patch": "patches/TimeBasedAudio.patch",
+      "baselineSha256Normalized": "4e322d844e4b8898ad5d2a3f5cfefeed9412347713957155b4c350c1121c9236",
+      "updatedSha256Normalized": "c23f133a66031e1e0e126efcecd33e37072045e9c9a25889cc76f816dad01d46"
+    },
+    {
+      "file": "unity-web/Assets/Scripts/Assembly-CSharp/Player.cs",
+      "patch": "patches/Player.patch",
+      "baselineSha256Normalized": "73910e2fc162fd4b4dbd22d7b8079970eb92a8be37bd31b736b2fdac49048639",
+      "updatedSha256Normalized": "88abb10a62a4ca01a596af93e5ac90b7da72a2823aa916d6a37d99ee518c58cd"
+    },
+    {
+      "file": "unity-web/Assets/Scripts/Assembly-CSharp/Peasant.cs",
+      "patch": "patches/Peasant.patch",
+      "baselineSha256Normalized": "e7daa6a22e5ffffdefdfd61be51f4bd21117114deab5bbf88379f7c16eeee2fb",
+      "updatedSha256Normalized": "1270866de97c45152bbf39768e71d7dc65dca31dd27e69932f1c6790f90b7d1e"
+    },
+    {
+      "file": "unity-web/Assets/Scripts/Assembly-CSharp/Worker.cs",
+      "patch": "patches/Worker.patch",
+      "baselineSha256Normalized": "89aa2b4ff8c69331d76bbb8aadb05b338db9ca9b31195d58993b3052041e4f31",
+      "updatedSha256Normalized": "557635e157ca3850b92ff37748eaca3994213cfc011da8390eb3085d40b337cd"
+    },
+    {
+      "file": "unity-web/Assets/Scripts/Assembly-CSharp/MainCamera.cs",
+      "patch": "patches/MainCamera.patch",
+      "baselineSha256Normalized": "38636dc6e5804c06b97243df7790051c82047acc2bbdbc375e4fe51c9aac85e8",
+      "updatedSha256Normalized": "5da0b43af49d1ef1d0fd2380feaf5481e5a30371da8b8e06fc5c1cd199652c9a"
+    },
+    {
+      "file": "unity-web/Assets/Scripts/Assembly-CSharp/Menu.cs",
+      "patch": "patches/Menu.patch",
+      "baselineSha256Normalized": "ddb8d8555696a1d399ac00e955563c9ea0bfacfbb6789e297e41a296ece9dd1f",
+      "updatedSha256Normalized": "f2014696b3e93f01357a2898b1a0fc414b19d9327d75712118e64a70f390c8bc"
+    },
+    {
+      "file": "unity-web/Assets/Scripts/Assembly-CSharp/Game.cs",
+      "patch": "patches/Game.patch",
+      "baselineSha256Normalized": "10a120b1e31cbf9c4fafdd62114bd91bdc12d6760806e2463e3809e4227177ec",
+      "updatedSha256Normalized": "bbbdf45202b3a8a147a7354b14dcdc3268ced426689a43689dc1f9df78d6aeee"
+    }
+  ]
+}

@@ -1,0 +1,46 @@
+--- a/unity-web/Assets/Scripts/Assembly-CSharp/AudioEmitter.cs
++++ b/unity-web/Assets/Scripts/Assembly-CSharp/AudioEmitter.cs
+@@ -1,2 +1,3 @@
+ using Lean;
++using DG.Tweening;
+ using System.Collections;
+@@ -43,2 +44,13 @@
+ 
++	private void OnDisable()
++	{
++		StopAllCoroutines();
++		var source = GetComponent<AudioSource>();
++		if (source != null)
++		{
++			source.DOKill();
++			source.Stop();
++		}
++	}
++
+ 	public AudioEmitter Play(int clipIndex = 0)
+@@ -71,2 +83,10 @@
+ 		AudioSource audioSource = Require.Component<AudioSource>(gameObject);
++		audioSource.DOKill();
++		audioSource.Stop();
++		var template = GetComponent<AudioSource>();
++		if (template != null)
++		{
++			audioSource.volume = template.volume;
++			audioSource.pitch = template.pitch;
++		}
+ 		audioSource.ignoreListenerPause = ignorePause;
+@@ -90,3 +110,3 @@
+ 		if (source.loop) yield break;
+-		float remaining = KingdomAudio.Duration(source.clip);
++		float remaining = Mathf.Max(KingdomAudio.Duration(source.clip), source.clip.length) + 0.05f;
+ 		while (remaining > 0f)
+@@ -97,2 +117,3 @@
+ 		}
++		while (source.isPlaying || (AudioListener.pause && !source.ignoreListenerPause)) yield return null;
+ 		if (pooled) LeanPool.Despawn(source.gameObject);
+@@ -103,2 +124,5 @@
+ 	{
++		StopAllCoroutines();
++		var source = GetComponent<AudioSource>();
++		if (source != null) source.Stop();
+ 		if (usePool)

@@ -1,0 +1,10 @@
+--- a/unity-web/Assets/Scripts/Assembly-CSharp/Peasant.cs
++++ b/unity-web/Assets/Scripts/Assembly-CSharp/Peasant.cs
+@@ -128,3 +128,6 @@
+ 		float position = ((shops.Count <= 0) ? Random.Range(Managers.kingdom.border.left, Managers.kingdom.border.right) : shops[Random.Range(0, shops.Count)].transform.position.x);
+-		_mover.SetGoal(position, walkSpeed);
++		bool runningHome = KingdomTweaks.Get(KingdomTweaks.Option.RecruitsRunHome) &&
++			(base.transform.position.x < Managers.kingdom.border.left || base.transform.position.x > Managers.kingdom.border.right);
++		if (runningHome) position = Managers.kingdom.campfirePosition;
++		_mover.SetGoal(position, runningHome ? runSpeed : walkSpeed);
+ 		while (_mover.movingToGoal)

@@ -1,0 +1,17 @@
+--- a/unity-web/Assets/Scripts/Assembly-CSharp/Mover.cs
++++ b/unity-web/Assets/Scripts/Assembly-CSharp/Mover.cs
+@@ -92,4 +92,3 @@
+ 			{
+-				_goalMode = GoalMode.Off;
+-				movingToGoal = false;
++				Stop();
+ 			}
+@@ -124,2 +123,8 @@
+ 		float num3 = _moveSpeed * _multiplier * base.transform.localScale.x;
++		if (num3 == 0f && _goalMode != GoalMode.Off)
++		{
++			velocity.x = 0f;
++			_rigidbody.velocity = velocity;
++			return;
++		}
+ 		if ((num3 > 0f && num3 > velocity.x) || (num3 < 0f && num3 < velocity.x))

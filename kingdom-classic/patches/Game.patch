@@ -1,0 +1,7 @@
+--- a/unity-web/Assets/Scripts/Assembly-CSharp/Game.cs
++++ b/unity-web/Assets/Scripts/Assembly-CSharp/Game.cs
+@@ -157,3 +157,3 @@
+ 			{
+-				HideMenu();
++				if (!_menu.GetComponent<KingdomTweaksMenu>().CloseIfOpen()) HideMenu();
+ 			}

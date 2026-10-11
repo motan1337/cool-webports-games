@@ -1,0 +1,29 @@
+--- a/unity-web/Assets/Scripts/Assembly-CSharp/Player.cs
++++ b/unity-web/Assets/Scripts/Assembly-CSharp/Player.cs
+@@ -337,3 +337,3 @@
+ 		_rearingTimer += Time.deltaTime;
+-		_tiredTimer -= Time.deltaTime;
++		_tiredTimer -= Time.deltaTime * (KingdomTweaks.Get(KingdomTweaks.Option.FasterRecovery) ? 2f : 1f);
+ 		_wellFedTimer -= Time.deltaTime;
+@@ -413,4 +413,4 @@
+ 		{
+-			stamina += _steed.standStaminaRate * Time.deltaTime;
+-			if (_groundType == GroundType.Grass && _eatTimer > _steed.eatDelay && _wellFedTimer < 0.75f * _steed.wellFedDuration)
++			stamina += KingdomTweaks.StaminaRate(_steed.standStaminaRate) * Time.deltaTime;
++			if (_groundType == GroundType.Grass && _eatTimer > KingdomTweaks.GrazingTime(_steed.eatDelay) && _wellFedTimer < 0.75f * _steed.wellFedDuration)
+ 			{
+@@ -432,3 +432,3 @@
+ 		{
+-			stamina += _steed.walkStaminaRate * Time.deltaTime;
++			stamina += KingdomTweaks.StaminaRate(_steed.walkStaminaRate) * Time.deltaTime;
+ 			if (direction == 0 || direction != _previousKeyDirection)
+@@ -446,3 +446,3 @@
+ 			{
+-				stamina += _steed.runStaminaRate * Time.deltaTime;
++				stamina += KingdomTweaks.StaminaRate(_steed.runStaminaRate) * Time.deltaTime;
+ 			}
+@@ -479,3 +479,3 @@
+ 		{
+-			if (_eatTimer > _steed.eatDuration)
++			if (_eatTimer > KingdomTweaks.GrazingTime(_steed.eatDuration))
+ 			{

@@ -1,0 +1,10 @@
+--- a/unity-web/Assets/Scripts/Assembly-CSharp/Menu.cs
++++ b/unity-web/Assets/Scripts/Assembly-CSharp/Menu.cs
+@@ -84,2 +84,3 @@
+ 		ShortcutNavigations();
++		KingdomTweaksMenu.Attach(this);
+ 	}
+@@ -251,2 +252,3 @@
+ 	{
++		if (GetComponent<KingdomTweaksMenu>().CloseIfOpen()) return;
+ 		if (_openPanel != null)

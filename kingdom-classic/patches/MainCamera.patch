@@ -1,0 +1,11 @@
+--- a/unity-web/Assets/Scripts/Assembly-CSharp/MainCamera.cs
++++ b/unity-web/Assets/Scripts/Assembly-CSharp/MainCamera.cs
+@@ -203,2 +203,8 @@
+ 	{
++		if (KingdomTweaks.Get(KingdomTweaks.Option.NoCameraShake))
++		{
++			_shakeTween.Kill();
++			_shakeOffset.localPosition = Vector3.zero;
++			return;
++		}
+ 		if ((origin - (Vector2)base.transform.position).magnitude < 6f)

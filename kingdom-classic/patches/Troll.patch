@@ -1,0 +1,35 @@
+--- a/unity-web/Assets/Scripts/Assembly-CSharp/Troll.cs
++++ b/unity-web/Assets/Scripts/Assembly-CSharp/Troll.cs
+@@ -555,3 +555,3 @@
+ 		{
+-			_collidingDamageable = other.GetComponentInParent<Damageable>();
++			RememberAttackCollision(other);
+ 		}
+@@ -563,3 +563,3 @@
+ 		{
+-			_collidingDamageable = other.GetComponentInParent<Damageable>();
++			RememberAttackCollision(other);
+ 		}
+@@ -581,6 +581,6 @@
+ 		}
+-		_collidingDamageable = collision.gameObject.GetComponentInParent<Damageable>();
++		RememberAttackCollision(collision.collider);
+ 		if (!_touchedGround)
+ 		{
+-			_touchedGround = collision.gameObject.CompareTag("Ground");
++			_touchedGround = collision.gameObject.CompareTag("Ground") && _rigidbody.velocity.y <= 0f;
+ 			if (_touchedGround)
+@@ -591,2 +591,13 @@
+ 	}
++
++	private void OnCollisionEnter2D(Collision2D collision)
++	{
++		if (_isCharging) RememberAttackCollision(collision.collider);
++	}
++
++	private void RememberAttackCollision(Collider2D other)
++	{
++		var target = other.GetComponentInParent<Damageable>();
++		if (target != null && target.IsDamagedBy(DamageSource.Troll)) _collidingDamageable = target;
++	}
+ }
