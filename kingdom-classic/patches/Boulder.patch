@@ -1,0 +1,18 @@
+--- a/unity-web/Assets/Scripts/Assembly-CSharp/Boulder.cs
++++ b/unity-web/Assets/Scripts/Assembly-CSharp/Boulder.cs
+@@ -67,2 +67,4 @@
+ 		_state = State.Fake;
++		_rigidbody.velocity = Vector2.zero;
++		_rigidbody.angularVelocity = 0f;
+ 		_rigidbody.isKinematic = true;
+@@ -77,2 +79,5 @@
+ 		_rigidbody.isKinematic = false;
++		_rigidbody.velocity = Vector2.zero;
++		_rigidbody.angularVelocity = 0f;
++		_lastCollided = double.NegativeInfinity;
+ 		_rigidbody.AddForce(force * _rigidbody.mass, ForceMode2D.Impulse);
+@@ -119,2 +124,4 @@
+ 				_collider.isTrigger = true;
++				_rigidbody.velocity = Vector2.zero;
++				_rigidbody.angularVelocity = 0f;
+ 				_rigidbody.isKinematic = true;

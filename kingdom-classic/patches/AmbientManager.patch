@@ -1,0 +1,49 @@
+--- a/unity-web/Assets/Scripts/Assembly-CSharp/AmbientManager.cs
++++ b/unity-web/Assets/Scripts/Assembly-CSharp/AmbientManager.cs
+@@ -32,2 +32,4 @@
+ 		_forestFader = Managers.blender.AddState(forestState, 0f, 1f);
++		ApplyEnvironmentVolumes(0f, 0f);
++		ApplyRegionVolumes(0f, 0f);
+ 		AudioSource[] array = ambientEmitters;
+@@ -55,13 +57,6 @@
+ 	{
+-		float num = 1f - 0.5f * (1f - Mathf.Abs(Managers.wind.WindSpeedCapped()));
+-		float value = 20f * Mathf.Log10(num + 0.0001f);
+-		ambientMixer.SetFloat("WindVol", value);
+-		ambientMixer.SetFloat("ForestWindVol", value);
+-		float value2 = Managers.blender.state.rain.value;
+-		float value3 = 20f * Mathf.Log10(value2 + 0.0001f);
+-		ambientMixer.SetFloat("RainVol", value3);
++		ApplyEnvironmentVolumes(Managers.wind.WindSpeedCapped(), Managers.blender.state.rain.value);
+ 		if (_weightUpdated)
+ 		{
+-			_weights[0] = 1f - _weights[1] - _weights[2];
+-			ambientMixer.TransitionToSnapshots(snapshots, _weights, 0f);
++			ApplyRegionVolumes(_weights[1], _weights[2]);
+ 			_forestFader.weight = _weights[1];
+@@ -71,2 +66,25 @@
+ 	}
++
++	private void ApplyEnvironmentVolumes(float windSpeed, float rain)
++	{
++		float wind = Mathf.Lerp(0.5f, 1f, Mathf.Clamp01(Mathf.Abs(windSpeed)));
++		ambientMixer.SetFloat("WindVol", Util.LinearToDecibel(wind));
++		ambientMixer.SetFloat("ForestWindVol", Util.LinearToDecibel(wind));
++		ambientMixer.SetFloat("RainVol", Mathf.Max(-80f, Util.LinearToDecibel(Mathf.Clamp01(rain))));
++	}
++
++	private void ApplyRegionVolumes(float forest, float castle)
++	{
++		forest = Mathf.Clamp01(forest);
++		castle = Mathf.Clamp01(castle);
++		float total = forest + castle;
++		if (total > 1f)
++		{
++			forest /= total;
++			castle /= total;
++		}
++		float meadow = Mathf.Max(0f, 1f - forest - castle);
++		ambientMixer.SetFloat("MeadowVol", -39.928783f * forest - 14.816608f * castle);
++		ambientMixer.SetFloat("ForestVol", -39.928783f * meadow - 80f * castle);
++	}
+ }

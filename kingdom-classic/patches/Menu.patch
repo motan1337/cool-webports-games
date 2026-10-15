@@ -1,0 +1,41 @@
+--- a/unity-web/Assets/Scripts/Assembly-CSharp/Menu.cs
++++ b/unity-web/Assets/Scripts/Assembly-CSharp/Menu.cs
+@@ -84,2 +84,3 @@
+ 		ShortcutNavigations();
++		KingdomTweaksMenu.Attach(this);
+ 	}
+@@ -210,2 +211,14 @@
+ 
++	public void ShowTweaksPanel(CanvasGroup panel)
++	{
++		ShowPanel(panel);
++	}
++
++	public void CloseTweaksPanel(CanvasGroup panel, Selectable returnTo)
++	{
++		if (_openPanel != panel) return;
++		HidePanel();
++		returnTo.Select();
++	}
++
+ 	private IEnumerator FadePanel(CanvasGroup panel, float targetAlpha, float duration)
+@@ -251,2 +264,8 @@
+ 	{
++		Managers.game.HandleMenuCancel();
++	}
++
++	public bool CancelCurrentPanel()
++	{
++		if (GetComponent<KingdomTweaksMenu>().CloseIfOpen()) return true;
+ 		if (_openPanel != null)
+@@ -254,7 +273,5 @@
+ 			HidePanel();
+-		}
+-		else
+-		{
+-			Managers.game.HideMenu();
+-		}
++			return true;
++		}
++		return false;
+ 	}

@@ -1,0 +1,12 @@
+--- a/unity-web/Assets/Scripts/Assembly-CSharp/Worker.cs
++++ b/unity-web/Assets/Scripts/Assembly-CSharp/Worker.cs
+@@ -125,3 +125,3 @@
+ 		{
+-			_mover.SetGoal(_queuedWork.gameObject, runSpeed, _queuedWork.GetWorkOffset(this), Mover.OffsetMode.Formation);
++			_mover.SetGoal(_queuedWork.gameObject, KingdomTweaks.WorkTravelSpeed(runSpeed), _queuedWork.GetWorkOffset(this), Mover.OffsetMode.Formation);
+ 		}
+@@ -130,3 +130,3 @@
+ 			float adjustedOffset = _queuedWork.transform.localScale.x * _queuedWork.GetWorkOffset(this);
+-			_mover.SetGoal(_queuedWork.transform.position.x + adjustedOffset, runSpeed);
++			_mover.SetGoal(_queuedWork.transform.position.x + adjustedOffset, KingdomTweaks.WorkTravelSpeed(runSpeed));
+ 		}

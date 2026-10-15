@@ -1,0 +1,361 @@
+--- a/unity-web/Assets/Scripts/Assembly-CSharp/AudioManager.cs
++++ b/unity-web/Assets/Scripts/Assembly-CSharp/AudioManager.cs
+@@ -1 +1,2 @@
++using System.Collections;
+ using UnityEngine;
+@@ -6,151 +7,206 @@
+ {
+-	private const float TrackCrossfadeDuration = 0.5f;
+-
+-	private const float SnapshotTransitionDuration = 0.5f;
+-
+-	public AudioMixer mainMixer;
+-
+-	[Header("Snapshots")]
+-	public AudioMixerSnapshot defaultSnapshot;
+-
+-	public AudioMixerSnapshot mutedSnapshot;
+-
+-	public AudioMixerSnapshot musicOnlySnapshot;
+-
+-	public AudioMixerSnapshot soundOnlySnapshot;
+-
+-	[FormerlySerializedAs("snapshots")]
+-	public AudioMixerSnapshot[] crossfaderSnapshots;
+-
+-	private AudioSource[] _audioSources;
+-
+-	private int _sourceIdx;
+-
+-	private AudioSource _usedSource;
+-
+-	private AudioClip _queuedTrack;
+-
+-	private float _soundVolume;
+-
+-	private float _musicVolume;
+-
+-	public float soundVolume
+-	{
+-		get
+-		{
+-			return _soundVolume;
+-		}
+-		set
+-		{
+-			_soundVolume = Mathf.Clamp01(value);
+-			float value2 = Util.LinearToDecibel(_soundVolume);
+-			mainMixer.SetFloat("MasterVol", value2);
+-			PlayerPrefs.SetFloat("soundVolume", _soundVolume);
+-		}
+-	}
+-
+-	public float musicVolume
+-	{
+-		get
+-		{
+-			return _musicVolume;
+-		}
+-		set
+-		{
+-			_musicVolume = Mathf.Clamp01(value);
+-			float value2 = Util.LinearToDecibel(_musicVolume);
+-			mainMixer.SetFloat("MusicVol", value2);
+-			PlayerPrefs.SetFloat("musicVolume", _musicVolume);
+-		}
+-	}
+-
+-	public override void Init()
+-	{
+-		_audioSources = GetComponents<AudioSource>();
+-		if (_audioSources.Length != 2)
+-		{
+-			KingdomException.Throw("AudioController requires exactly TWO AudioSource components!");
+-		}
+-	}
+-
+-	public override void OnLevelLoaded()
+-	{
+-		soundVolume = PlayerPrefs.GetFloat("soundVolume", 0.5f);
+-		musicVolume = PlayerPrefs.GetFloat("musicVolume", 0.5f);
+-		AudioListener.pause = false;
+-		defaultSnapshot.TransitionTo(3f);
+-	}
+-
+-	private void Update()
+-	{
+-		if (_queuedTrack != null && !AudioListener.pause && (_usedSource == null || !_usedSource.isPlaying))
+-		{
+-			PlayTrack(_queuedTrack);
+-			_queuedTrack = null;
+-		}
+-	}
+-
+-	public void PlayTrack(AudioClip clip, bool ignorePause = false)
+-	{
+-		_sourceIdx = (_sourceIdx + 1) % 2;
+-		_usedSource = _audioSources[_sourceIdx];
+-		_usedSource.clip = clip;
+-		_usedSource.loop = false;
+-		_usedSource.ignoreListenerPause = ignorePause;
+-		_usedSource.Play();
+-		crossfaderSnapshots[_sourceIdx].TransitionTo(0.5f);
+-	}
+-
+-	public void PlayMenuTrack(AudioClip clip)
+-	{
+-		PlayTrack(clip, true);
+-	}
+-
+-	public void QueueTrack(AudioClip clip)
+-	{
+-		_queuedTrack = clip;
+-	}
+-
+-	public void FadeCurrentTrack()
+-	{
+-		_sourceIdx = (_sourceIdx + 1) % 2;
+-		_audioSources[_sourceIdx].Stop();
+-		crossfaderSnapshots[_sourceIdx].TransitionTo(0.5f);
+-	}
+-
+-	public void MuteAll()
+-	{
+-		mutedSnapshot.TransitionTo(0.5f);
+-	}
+-
+-	public void MuteNone()
+-	{
+-		defaultSnapshot.TransitionTo(0.5f);
+-	}
+-
+-	public void MuteSoundOnly()
+-	{
+-		musicOnlySnapshot.TransitionTo(0.5f);
+-	}
+-
+-	public void MuteMusicOnly()
+-	{
+-		soundOnlySnapshot.TransitionTo(0.5f);
+-	}
+-
+-	public void Pause()
+-	{
+-		AudioListener.pause = true;
+-	}
+-
+-	public void Resume()
+-	{
+-		AudioListener.pause = false;
+-	}
+-
+-	public void StopTracks()
+-	{
+-		_audioSources[0].Stop();
+-		_audioSources[1].Stop();
+-	}
++    public AudioMixer mainMixer;
++    public AudioMixerSnapshot defaultSnapshot;
++    public AudioMixerSnapshot mutedSnapshot;
++    public AudioMixerSnapshot musicOnlySnapshot;
++    public AudioMixerSnapshot soundOnlySnapshot;
++    [FormerlySerializedAs("snapshots")]
++    public AudioMixerSnapshot[] crossfaderSnapshots;
++    private AudioSource[] _audioSources;
++    private int _sourceIdx;
++    private AudioSource _usedSource;
++    private AudioClip _queuedTrack;
++    private Coroutine _trackRoutine;
++    private Coroutine _volumeRoutine;
++    private bool _trackPending;
++    private bool _muteSound;
++    private bool _muteMusic;
++    private float _soundVolume;
++    private float _musicVolume;
++
++    public float soundVolume
++    {
++        get { return _soundVolume; }
++        set
++        {
++            _soundVolume = Mathf.Clamp01(value);
++            ApplyVolumes();
++            PlayerPrefs.SetFloat("soundVolume", _soundVolume);
++        }
++    }
++
++    public float musicVolume
++    {
++        get { return _musicVolume; }
++        set
++        {
++            _musicVolume = Mathf.Clamp01(value);
++            ApplyVolumes();
++            PlayerPrefs.SetFloat("musicVolume", _musicVolume);
++        }
++    }
++
++    public override void Init()
++    {
++        _audioSources = GetComponents<AudioSource>();
++        if (_audioSources.Length != 2) KingdomException.Throw("AudioController requires exactly TWO AudioSource components!");
++        foreach (var source in _audioSources)
++        {
++            source.Stop();
++            source.playOnAwake = false;
++            source.volume = 0f;
++            var groups = mainMixer.FindMatchingGroups("Music");
++            if (groups.Length > 0) source.outputAudioMixerGroup = groups[0];
++        }
++    }
++
++    public override void OnLevelLoaded()
++    {
++        _muteSound = false;
++        _muteMusic = false;
++        soundVolume = PlayerPrefs.GetFloat("soundVolume", 0.5f);
++        musicVolume = PlayerPrefs.GetFloat("musicVolume", 0.5f);
++        AudioListener.pause = false;
++    }
++
++    private void ApplyVolumes()
++    {
++        if (mainMixer == null) return;
++        float effects = _muteSound ? -80f : Util.LinearToDecibel(_soundVolume);
++        mainMixer.SetFloat("MasterVol", 0f);
++        mainMixer.SetFloat("MusicVol", _muteMusic ? -80f : Util.LinearToDecibel(_musicVolume));
++        mainMixer.SetFloat("EffectsVol", effects);
++        mainMixer.SetFloat("AmbientVol", effects);
++        mainMixer.SetFloat("UIVol", Util.LinearToDecibel(_soundVolume));
++    }
++
++    private void Update()
++    {
++        if (_queuedTrack != null && !_trackPending && !AudioListener.pause && (_usedSource == null || !_usedSource.isPlaying))
++        {
++            var next = _queuedTrack;
++            _queuedTrack = null;
++            PlayTrack(next);
++        }
++    }
++
++    public void PlayTrack(AudioClip clip, bool ignorePause = false)
++    {
++        if (clip == null) return;
++        if (_trackRoutine != null) StopCoroutine(_trackRoutine);
++        _trackPending = true;
++        _sourceIdx = (_sourceIdx + 1) % 2;
++        var previous = _usedSource;
++        _usedSource = _audioSources[_sourceIdx];
++        _usedSource.Stop();
++        _usedSource.volume = 0f;
++        _usedSource.clip = clip;
++        _usedSource.loop = false;
++        _usedSource.ignoreListenerPause = ignorePause;
++        _trackRoutine = StartCoroutine(StartTrack(_usedSource, previous));
++    }
++
++    private IEnumerator StartTrack(AudioSource next, AudioSource previous)
++    {
++        if (next.clip.loadState == AudioDataLoadState.Unloaded) next.clip.LoadAudioData();
++        while (next.clip.loadState == AudioDataLoadState.Loading) yield return null;
++        if (next.clip.loadState != AudioDataLoadState.Loaded)
++        {
++            _trackPending = false;
++            Debug.LogWarning("Music failed to load: " + next.clip.name);
++            yield break;
++        }
++        next.Play();
++        _trackPending = false;
++        float oldVolume = previous == null ? 0f : previous.volume;
++        float elapsed = 0f;
++        while (elapsed < 0.5f)
++        {
++            if (!AudioListener.pause || next.ignoreListenerPause) elapsed += Time.unscaledDeltaTime;
++            next.volume = Mathf.Clamp01(elapsed / 0.5f);
++            if (previous != null && previous != next) previous.volume = oldVolume * (1f - next.volume);
++            yield return null;
++        }
++        next.volume = 1f;
++        if (previous != null && previous != next)
++        {
++            previous.volume = 0f;
++            previous.Stop();
++        }
++        _trackRoutine = null;
++    }
++
++    public void PlayMenuTrack(AudioClip clip) { PlayTrack(clip, true); }
++    public void QueueTrack(AudioClip clip) { _queuedTrack = clip; }
++
++    public void FadeCurrentTrack()
++    {
++        if (_trackRoutine != null) StopCoroutine(_trackRoutine);
++        _trackPending = false;
++        _trackRoutine = StartCoroutine(FadeTracks());
++    }
++
++    private IEnumerator FadeTracks()
++    {
++        float first = _audioSources[0].volume;
++        float second = _audioSources[1].volume;
++        float elapsed = 0f;
++        while (elapsed < 0.5f)
++        {
++            elapsed += Time.unscaledDeltaTime;
++            float gain = 1f - Mathf.Clamp01(elapsed / 0.5f);
++            _audioSources[0].volume = first * gain;
++            _audioSources[1].volume = second * gain;
++            yield return null;
++        }
++        foreach (var source in _audioSources) source.Stop();
++        _usedSource = null;
++        _trackRoutine = null;
++    }
++
++    private void SetMute(bool sound, bool music)
++    {
++        _muteSound = sound;
++        _muteMusic = music;
++        if (_volumeRoutine != null) StopCoroutine(_volumeRoutine);
++        _volumeRoutine = StartCoroutine(FadeVolumes());
++    }
++
++    private IEnumerator FadeVolumes()
++    {
++        string[] names = { "EffectsVol", "AmbientVol", "MusicVol" };
++        var initial = new float[names.Length];
++        for (int i = 0; i < names.Length; i++) mainMixer.GetFloat(names[i], out initial[i]);
++        float elapsed = 0f;
++        while (elapsed < 0.5f)
++        {
++            elapsed += Time.unscaledDeltaTime;
++            for (int i = 0; i < names.Length; i++)
++            {
++                bool muted = i == 2 ? _muteMusic : _muteSound;
++                float target = muted ? -80f : Util.LinearToDecibel(i == 2 ? _musicVolume : _soundVolume);
++                mainMixer.SetFloat(names[i], Mathf.Lerp(initial[i], target, elapsed / 0.5f));
++            }
++            yield return null;
++        }
++        ApplyVolumes();
++        _volumeRoutine = null;
++    }
++
++    public void MuteAll() { SetMute(true, true); }
++    public void MuteNone() { SetMute(false, false); }
++    public void MuteSoundOnly() { SetMute(true, false); }
++    public void MuteMusicOnly() { SetMute(false, true); }
++    public void Pause() { AudioListener.pause = true; }
++    public void Resume() { AudioListener.pause = false; }
++
++    public void StopTracks()
++    {
++        if (_trackRoutine != null) StopCoroutine(_trackRoutine);
++        _trackRoutine = null;
++        _trackPending = false;
++        _queuedTrack = null;
++        _usedSource = null;
++        foreach (var source in _audioSources) source.Stop();
++    }
+ }

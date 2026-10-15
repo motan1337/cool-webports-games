@@ -1,0 +1,68 @@
+--- a/unity-web/Assets/Scripts/Assembly-CSharp/Steed.cs
++++ b/unity-web/Assets/Scripts/Assembly-CSharp/Steed.cs
+@@ -1,2 +1,3 @@
+ using System.Collections;
++using System.Collections.Generic;
+ using ParticlePlayground;
+@@ -93,2 +94,6 @@
+ 	private AudioEmitter _gallopSound;
++
++	private readonly List<AudioEmitter> _walkSounds = new List<AudioEmitter>();
++
++	private readonly List<AudioEmitter> _gallopSounds = new List<AudioEmitter>();
+ 
+@@ -273,7 +278,6 @@
+ 		{
++			StopStepSounds(_gallopSounds);
++			_gallopSound = null;
+ 			_walkSound = _currentWalkSoundVar.Play(base.transform.position);
+-			if (_gallopSound != null)
+-			{
+-				_gallopSound.Stop();
+-			}
++			RememberStepSound(_walkSounds, _walkSound);
+ 		}
+@@ -285,7 +289,6 @@
+ 		{
++			StopStepSounds(_walkSounds);
++			_walkSound = null;
+ 			_gallopSound = gallopSound.Play(base.transform.position);
+-			if (_walkSound != null)
+-			{
+-				_walkSound.Stop();
+-			}
++			RememberStepSound(_gallopSounds, _gallopSound);
+ 		}
+@@ -295,10 +298,24 @@
+ 	{
+-		if (_walkSound != null)
+-		{
+-			_walkSound.Stop();
+-		}
+-		else if (_gallopSound != null)
+-		{
+-			_gallopSound.Stop();
+-		}
++		StopStepSounds(_walkSounds);
++		StopStepSounds(_gallopSounds);
++		_walkSound = null;
++		_gallopSound = null;
++	}
++
++	private static void RememberStepSound(List<AudioEmitter> sounds, AudioEmitter sound)
++	{
++		sounds.RemoveAll(item => item == null);
++		if (sound != null) sounds.Add(sound);
++	}
++
++	private static void StopStepSounds(List<AudioEmitter> sounds)
++	{
++		foreach (var sound in sounds)
++			if (sound != null) sound.Stop();
++		sounds.Clear();
++	}
++
++	private void OnDisable()
++	{
++		OnAnimStandStart();
+ 	}

@@ -1,0 +1,79 @@
+--- a/unity-web/Assets/Scripts/Assembly-CSharp/Player.cs
++++ b/unity-web/Assets/Scripts/Assembly-CSharp/Player.cs
+@@ -39,2 +39,4 @@
+ 
++	public enum StaminaDisplayState { Normal, Fed, Recovering, Eating, SecondWind }
++
+ 	private enum ActionState
+@@ -154,2 +156,4 @@
+ 
++	private bool _usingReserve;
++
+ 	public Model _model;
+@@ -159,2 +163,19 @@
+ 	public bool coinDroppingEnabled { get; set; }
++
++	public float staminaFraction { get { return Mathf.Clamp01(stamina); } }
++	public float fedFraction { get { return _steed == null || _steed.wellFedDuration <= 0f ? 0f : Mathf.Clamp01(_wellFedTimer / _steed.wellFedDuration); } }
++	public float exhaustionFraction { get { return _steed == null || _steed.tiredDuration <= 0f ? 0f : Mathf.Clamp01(_tiredTimer / _steed.tiredDuration); } }
++	public float grazingFraction { get { return _steed == null || _actionState != ActionState.Eat ? 0f : Mathf.Clamp01(_eatTimer / Mathf.Max(0.01f, KingdomTweaks.GrazingTime(_steed.eatDuration))); } }
++	public bool hasSecondWind { get { return _usingReserve && _actionState == ActionState.Run; } }
++	public StaminaDisplayState staminaDisplayState
++	{
++		get
++		{
++			if (_actionState == ActionState.Eat) return StaminaDisplayState.Eating;
++			if (_tiredTimer > 0f) return StaminaDisplayState.Recovering;
++			if (_wellFedTimer > 0f) return StaminaDisplayState.Fed;
++			if (hasSecondWind) return StaminaDisplayState.SecondWind;
++			return StaminaDisplayState.Normal;
++		}
++	}
+ 
+@@ -262,2 +283,3 @@
+ 		_steed = steed;
++		_usingReserve = false;
+ 		_steed.mode = Steed.Mode.Player;
+@@ -337,3 +359,3 @@
+ 		_rearingTimer += Time.deltaTime;
+-		_tiredTimer -= Time.deltaTime;
++		_tiredTimer -= Time.deltaTime * (KingdomTweaks.Get(KingdomTweaks.Option.FasterRecovery) ? 2f : 1f);
+ 		_wellFedTimer -= Time.deltaTime;
+@@ -382,2 +404,3 @@
+ 		case ActionState.Stand:
++			_usingReserve = false;
+ 			_eatTimer = 0f;
+@@ -386,2 +409,3 @@
+ 		case ActionState.Walk:
++			_usingReserve = false;
+ 			_mover.SetSpeed(_steed.walkSpeed, direction);
+@@ -394,2 +418,3 @@
+ 		case ActionState.Eat:
++			_usingReserve = false;
+ 			_eatTimer = 0f;
+@@ -413,4 +438,4 @@
+ 		{
+-			stamina += _steed.standStaminaRate * Time.deltaTime;
+-			if (_groundType == GroundType.Grass && _eatTimer > _steed.eatDelay && _wellFedTimer < 0.75f * _steed.wellFedDuration)
++			stamina += KingdomTweaks.StaminaRate(_steed.standStaminaRate) * Time.deltaTime;
++			if (_groundType == GroundType.Grass && _eatTimer > KingdomTweaks.GrazingTime(_steed.eatDelay) && _wellFedTimer < 0.75f * _steed.wellFedDuration)
+ 			{
+@@ -432,3 +457,3 @@
+ 		{
+-			stamina += _steed.walkStaminaRate * Time.deltaTime;
++			stamina += KingdomTweaks.StaminaRate(_steed.walkStaminaRate) * Time.deltaTime;
+ 			if (direction == 0 || direction != _previousKeyDirection)
+@@ -446,3 +471,3 @@
+ 			{
+-				stamina += _steed.runStaminaRate * Time.deltaTime;
++				stamina += KingdomTweaks.StaminaRate(_steed.runStaminaRate) * Time.deltaTime;
+ 			}
+@@ -461,2 +486,3 @@
+ 					stamina = _steed.reserveStamina;
++					_usingReserve = true;
+ 				}
+@@ -479,3 +505,3 @@
+ 		{
+-			if (_eatTimer > _steed.eatDuration)
++			if (_eatTimer > KingdomTweaks.GrazingTime(_steed.eatDuration))
+ 			{

@@ -1,0 +1,35 @@
+--- a/unity-web/Assets/Scripts/Assembly-CSharp/Game.cs
++++ b/unity-web/Assets/Scripts/Assembly-CSharp/Game.cs
+@@ -70,2 +70,4 @@
+ 	private IControllable _currentControllable;
++
++	private int _lastMenuInputFrame = -1;
+ 
+@@ -147,14 +149,3 @@
+ 		{
+-			if (menuState == MenuState.None && (gameState == GameState.Game || gameState == GameState.Intro))
+-			{
+-				ShowMenu();
+-			}
+-			else if (menuState == MenuState.Credits)
+-			{
+-				HideCredits();
+-			}
+-			else if (menuState == MenuState.Menu)
+-			{
+-				HideMenu();
+-			}
++			HandleMenuCancel();
+ 		}
+@@ -227,2 +218,11 @@
+ 
++	public void HandleMenuCancel()
++	{
++		if (_lastMenuInputFrame == Time.frameCount) return;
++		_lastMenuInputFrame = Time.frameCount;
++		if (menuState == MenuState.None && (gameState == GameState.Game || gameState == GameState.Intro)) ShowMenu();
++		else if (menuState == MenuState.Credits) HideCredits();
++		else if (menuState == MenuState.Menu && !_menu.CancelCurrentPanel()) HideMenu();
++	}
++
+ 	public void ShowMenu(bool shouldPause = true)
