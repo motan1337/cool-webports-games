@@ -15,4 +15,4 @@ When i will have multiple intresting webports i will make a seperated webpage to
 
 fnaf1: https://fnaf1.motan-femboy.cc/
 
-kingdom classic: https://kingdom.motan-femboy.cc/ rough shape but playable; bugs: sound & music is fucked (should be better now), and one user told me that the katapult has a funny bug but its only visual, after launching the rock and hits it starts to go to the moon ??? (should not happen anymore) --- added tweaks menu
+kingdom classic: https://kingdom.motan-femboy.cc/ bugs: sound & music is fucked (should be better now), added tweaks menu for cheesing the game
